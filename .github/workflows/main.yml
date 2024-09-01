@@ -23,22 +23,28 @@ jobs:
           git switch release/v4.4
       - name: Modify configs
         run: |
-          for path in `ls /w/configs/defconfig.*`
+          for path in `ls /w/mods/configs/defconfig.*`
           do
             config=$(basename $path)
-            cat /w/configs/$config >>/opt/esp/lib-builder/configs/$config
+            cat /w/mods/configs/$config >>/opt/esp/lib-builder/configs/$config
           done
+      - name: Patch component update
+        run: |
+          ver=2.0.16
+          wget https://github.com/espressif/arduino-esp32/releases/download/$ver/esp32-$ver.zip
+          cd /w/
+          unzip esp32-$ver.zip
+          rm -f esp32-$ver.zip
+          rm /opt/esp/lib-builder/tools/update-components.sh
+          cp /w/mods/update-components.sh /opt/esp/lib-builder/tools
       - name: Build
         run: |
           cd /opt/esp/lib-builder/
-          ./build.sh -t esp32s3
+          ./build.sh -I v4.4.7 -t esp32s3
       - name: Zip artifacts
         run: |
-          ver=2.0.17
+          ver=2.0.16
           cd /w/
-          wget https://github.com/espressif/arduino-esp32/releases/download/$ver/esp32-$ver.zip
-          unzip esp32-$ver.zip
-          rm -f esp32-$ver.zip
           cp -r /opt/esp/lib-builder/out/tools/* esp32-$ver/tools/
           zip -r esp32-$ver.zip esp32-$ver
       - name: Upload artifacts
